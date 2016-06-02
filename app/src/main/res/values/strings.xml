@@ -12,4 +12,9 @@
     <string name="weeks">Weeks</string>
     <string name="months">Months</string>
     <string name="years">Years</string>
+    <string name="settings">Settings</string>
+    <string name="ok">OK</string>
+    <string name="permission_rationale">Location data is used as part of the Google Fit API</string>
+    <string name="permission_denied_explanation">Permission was denied, but is needed for core
+        functionality.</string>
 </resources>
