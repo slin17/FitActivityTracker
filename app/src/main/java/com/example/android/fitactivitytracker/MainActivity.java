@@ -12,13 +12,13 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.Scopes;
@@ -28,11 +28,13 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.Fitness;
+import com.google.android.gms.fitness.FitnessActivities;
 import com.google.android.gms.fitness.data.Bucket;
 import com.google.android.gms.fitness.data.DataPoint;
 import com.google.android.gms.fitness.data.DataSet;
 import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Field;
+import com.google.android.gms.fitness.data.Session;
 import com.google.android.gms.fitness.data.Value;
 import com.google.android.gms.fitness.request.DataDeleteRequest;
 import com.google.android.gms.fitness.request.DataReadRequest;
@@ -51,16 +53,19 @@ import static java.text.DateFormat.getTimeInstance;
 public class MainActivity extends AppCompatActivity {
     public static final String TAG = "FitActivityTracker";
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
-    public static final String SAMPLE_SESSION_NAME = "Today Workout";
+    public static final String SAMPLE_SESSION_NAME = "Test Session";
 
     private static final String AUTH_PENDING = "auth_state_pending";
     private static boolean authInProgress = false;
 
-    private static int checkForFlag;
-
-    private static int goalPeriod;
+    private static StringBuilder activityInfo = new StringBuilder("Your Today Activity Summary: \n\n");
+    private static StringBuilder todayFitInfo = new StringBuilder("Your Today Fitness Result: \n");
+    private static StringBuilder emptyEditText = new StringBuilder("");
+    private static int emptyEditTextCount = 0;
 
     public static GoogleApiClient mClient = null;
+
+    private Session mSession;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
         if (!checkPermissions()) {
             requestPermissions();
         }
+        Button checkGoalButton = (Button) findViewById(R.id.check_your_goal_button);
+        checkGoalButton.setEnabled(false);
     }
 
     @Override
@@ -82,12 +89,12 @@ public class MainActivity extends AppCompatActivity {
 
         // This ensures that if the user denies the permissions then uses Settings to re-enable
         // them, the app will start working.
-        executeTask();
+        buildFitnessClient();
     }
 
-
-    private void executeTask() {
-        ((EditText)findViewById(R.id.val_check_goal_edit_text)).setOnEditorActionListener(
+    /*
+    private void executeTask2() {
+        ((EditText)findViewById(R.id.activity_duration_edit_text)).setOnEditorActionListener(
                 new TextView.OnEditorActionListener() {
                     @Override
                     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
@@ -101,62 +108,71 @@ public class MainActivity extends AppCompatActivity {
                             // the user is done typing.
 
                             //}
-                            buildFitnessClient();
+                            String[] goalStr = valAllEditText();
+                            new ReadDataAndCheckGoalTask().execute(goalStr);
                             return true; // consume.
                         }
                         return false; // pass on to other listeners.
                     }
                 });
     }
+    */
 
-    /*
-    public void onRadioButtonClicked(View view) {
-        // Is the button now checked?
 
-        boolean checked = ((RadioButton) view).isChecked();
-
-        // Check which radio button was clicked
-        switch(view.getId()) {
-            case R.id.days_radio_button:
-                if (checked)
-                    checkForFlag = 0;
-                    break;
-            case R.id.weeks_radio_button:
-                if (checked)
-                    checkForFlag = 1;
-                    break;
-
-            case R.id.months_radio_button:
-                if (checked)
-                    checkForFlag = 2;
-                    break;
-
-            case R.id.years_radio_button:
-                if (checked)
-                    checkForFlag = 3;
-                    break;
+    public void executeTask(View view) {
+        String[] goalStr = valAllEditText();
+        if (emptyEditTextCount > 0) {
+            TextView textView = (TextView) findViewById(R.id.return_msg_text_view);
+            textView.setText(emptyEditText.toString());
+            emptyEditText = new StringBuilder("");
+            emptyEditTextCount = 0;
+        }
+        else {
+            new ReadDataAndCheckGoalTask().execute(goalStr);
         }
     }
-    */
 
     private String[] valAllEditText(){
         //to check if the user has entered values into the edittext fields for number of steps, calories expended
         //and distance traveled
         EditText numStepsET = (EditText) findViewById(R.id.num_steps_edit_text);
         String numStepsStr = numStepsET.getText().toString();
+        if (numStepsStr.equals("")) {
+            emptyEditText.append("Please enter the number of steps ...\n");
+            emptyEditTextCount++;
+        }
+
         EditText calExpended = (EditText) findViewById(R.id.calories_expended_edit_text);
         String caloriesStr = calExpended.getText().toString();
+        if (caloriesStr.equals("")) {
+            emptyEditText.append("Please enter the number of calories expended ...\n");
+            emptyEditTextCount++;
+        }
+
         EditText distanceET = (EditText) findViewById(R.id.distance_traveled_edit_text);
         String distanceStr = distanceET.getText().toString();
-        String[] retStr = {numStepsStr, caloriesStr, distanceStr};
+        if (distanceStr.equals("")) {
+            emptyEditText.append("Please enter the distance covered ...\n");
+            emptyEditTextCount++;
+        }
 
+        EditText activityDurationEditText = (EditText) findViewById(R.id.activity_duration_edit_text);
+        String durationStr = activityDurationEditText.getText().toString();
+        if (durationStr.equals("")) {
+            emptyEditText.append("Please enter the activity duration ...\n\n");
+            emptyEditTextCount++;
+        }
+
+        String[] retStr = {numStepsStr, caloriesStr, distanceStr, durationStr};
         return retStr;
     }
+
 
     private void buildFitnessClient() {
         // Create the Google API Client
         if (mClient == null && checkPermissions()){
             mClient = new GoogleApiClient.Builder(this)
+                    .addApi(Fitness.RECORDING_API)
                     .addApi(Fitness.HISTORY_API)
                     .addApi(Fitness.SESSIONS_API)
                     .addScope(new Scope(Scopes.FITNESS_LOCATION_READ_WRITE))
@@ -167,13 +183,10 @@ public class MainActivity extends AppCompatActivity {
                                 @Override
                                 public void onConnected(Bundle bundle) {
                                     Log.i(TAG, "Connected!!!");
-                                    // Now you can make calls to the Fitness APIs.  What to do?
-                                    // Look at some data!!
-                                    EditText valCheckGoalET = (EditText) findViewById(R.id.val_check_goal_edit_text);
-                                    String valCGS = valCheckGoalET.getText().toString();
-                                    String[] goalStr = valAllEditText();
-                                    goalPeriod = Integer.valueOf(valCGS);
-                                    new ReadDataAndCompareTask().execute(goalStr);
+                                    Toast.makeText(getApplicationContext(),
+                                            "GoogleApiClient Connected!!!",Toast.LENGTH_SHORT).show();
+                                    Button checkGoalButton = (Button) findViewById(R.id.check_your_goal_button);
+                                    checkGoalButton.setEnabled(true);
                                 }
 
                                 @Override
@@ -199,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private class ReadDataAndCompareTask extends AsyncTask<String[], Void, String[]> {
+    private class ReadDataAndCheckGoalTask extends AsyncTask<String[], Void, String[]> {
 
         @Override
         protected String[] doInBackground(String[]... params) {
@@ -214,22 +227,23 @@ public class MainActivity extends AppCompatActivity {
                     Fitness.HistoryApi.readData(mClient, readRequest).await(1, TimeUnit.MINUTES);
             // [END read_dataset]
             printData(dataReadResult);
-            return hasCheckedGoal(dataReadResult, params[0]);
+            return checkGoal(dataReadResult, params[0]);
         }
 
         @Override
         protected void onPostExecute(String[] result) {
             //indices 0 - for step counts, 1 - for calories expended, 2 - for distance covered
             //currently only supports first two, [will fix it]
-            String text1;
-            String text2;
-            String text3;
+            String text1, text2, text3, text4;
+
             int numStepsDiff = Integer.valueOf(result[0]);
             float caloriesDiff = Float.valueOf(result[1]);
             int distanceDiff = Integer.valueOf(result[2]);
+            long durationDiff = Long.valueOf(result[3]);
             Log.i(TAG,"numStepsDiff: "+ numStepsDiff);
             Log.i(TAG,"caloriesDiff: "+ caloriesDiff);
             Log.i(TAG,"distanceDiff: "+ distanceDiff);
+            Log.i(TAG,"durationDiff: "+ distanceDiff);
             if (numStepsDiff <= 0) {
                 text1 = "Yay, you've completed your goal for number of steps.\n";
             } else {
@@ -245,39 +259,32 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 text3 = "Your distance covered is " + distanceDiff + " short of your goal.\n";
             }
+            if (durationDiff <= 0) {
+                text4 = "Yay, you've completed your goal for activity duration.\n";
+            } else {
+                text4 = "Your activity duration is " + durationDiff + " short of your goal.\n";
+            }
             TextView textView = (TextView) findViewById(R.id.return_msg_text_view);
-            String returnMsg = text1+text2+text3;
+            String returnMsg = text1 + text2 + text3 + text4 +
+                    "\n" + todayFitInfo.toString() + "\n" + activityInfo.toString();
             textView.setText(returnMsg);
+            clearAllGlobalVar();
         }
+    }
+
+    private void clearAllGlobalVar() {
+        activityInfo = new StringBuilder("Your Today Activity Summary: \n\n");
+        todayFitInfo = new StringBuilder("Your Today Fitness Result: \n");
     }
 
     public static DataReadRequest queryFitnessData() {
         // [START build_read_data_request]
         // Setting a start and end date using a range of 1 day before this moment.
-        /*int field;
-        switch (checkForFlag) {
-            case 0:
-                field = Calendar.DAY_OF_YEAR;
-                break;
-            case 1:
-                field = Calendar.WEEK_OF_YEAR;
-                break;
-            case 2:
-                field = Calendar.MONTH;
-                break;
-            case 3:
-                field = Calendar.YEAR;
-                break;
-            default:
-                field = Calendar.DAY_OF_YEAR;
-                break;
-        }*/
         Calendar cal = Calendar.getInstance();
         Date now = new Date();
         cal.setTime(now);
-        //cal.add(field, -1);
         long endTime = cal.getTimeInMillis();
-        cal.add(Calendar.DAY_OF_YEAR, -goalPeriod);
+        cal.add(Calendar.DAY_OF_YEAR, -1);
         long startTime = cal.getTimeInMillis();
 
         java.text.DateFormat dateFormat = getDateInstance();
@@ -289,8 +296,8 @@ public class MainActivity extends AppCompatActivity {
                 .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
                 .aggregate(DataType.TYPE_CALORIES_EXPENDED, DataType.AGGREGATE_CALORIES_EXPENDED)
                 .aggregate(DataType.TYPE_DISTANCE_DELTA, DataType.AGGREGATE_DISTANCE_DELTA)
-
-                .bucketByTime(goalPeriod, TimeUnit.DAYS)
+                .aggregate(DataType.TYPE_ACTIVITY_SEGMENT, DataType.AGGREGATE_ACTIVITY_SUMMARY)
+                .bucketByTime(1, TimeUnit.DAYS)
                 .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
                 .build();
         // [END build_read_data_request]
@@ -321,18 +328,15 @@ public class MainActivity extends AppCompatActivity {
         // [END parse_read_data_result]
     }
 
-    public static String[] hasCheckedGoal(DataReadResult dataReadResult, String[] goal){
-        //int retVal = -1;
-        //List<Integer> retVList = new ArrayList<Integer>();
-        //int i = 0;
-        List<String> strL = new ArrayList<String>(3);
+    public static String[] checkGoal(DataReadResult dataReadResult, String[] goal){
+        List<String> strL = new ArrayList<String>(4);
         if (dataReadResult.getBuckets().size() > 0) {
             Log.i(TAG, "Number of returned buckets of DataSets is: "
                     + dataReadResult.getBuckets().size());
             for (Bucket bucket : dataReadResult.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
-                    String str = tempCheckGoal(dataSet, goal);
+                    String str = checkGoalHelper(dataSet, goal);
                     strL.add(str);
                 }
             }
@@ -340,46 +344,87 @@ public class MainActivity extends AppCompatActivity {
             Log.i(TAG, "Number of returned DataSets is: "
                     + dataReadResult.getDataSets().size());
             for (DataSet dataSet : dataReadResult.getDataSets()) {
-                String str = tempCheckGoal(dataSet, goal);
+                String str = checkGoalHelper(dataSet, goal);
                 strL.add(str);
             }
         }
-        return strL.toArray(new String[3]);
+        return strL.toArray(new String[4]);
     }
 
-    //tempoaray checkGoal function - only check for total accumulated values for each dataSet
-    //needs support for comparing goals with the dataSet bucketed by each day
-    private static String tempCheckGoal(DataSet dataSet, String[] goal){
-        //no need for "for" loop to loop through each data point
-        //because we know there will only be one data point, the total of all, for e.g., step counts,
-        // for the number of days, provided by the user
+    private static String checkGoalHelper(DataSet dataSet, String[] goal){
         DataType dataType = dataSet.getDataType();
-        List<DataPoint> dpL = dataSet.getDataPoints();
-        if (dpL.size() > 0){
-            DataPoint dp = dpL.get(0);
-            //also there is only one field, by assumption
-            Field field = dp.getDataType().getFields().get(0);
-            Value value = dp.getValue(field);
-            if (dataType.equals(DataType.TYPE_STEP_COUNT_DELTA)){
-                int val = Integer.valueOf(""+value);
-                int goalVal = Integer.valueOf(""+goal[0]);
-                return Integer.toString(goalVal-val);
-            } else if (dataType.equals(DataType.TYPE_CALORIES_EXPENDED)) {
-                float val = Float.valueOf(""+value);
-                float goalVal = Float.valueOf(""+goal[1]);
-                return Float.toString(goalVal-val);
-            } else if (dataType.equals(DataType.TYPE_DISTANCE_DELTA)) {
-                int val = Integer.valueOf(""+value);
-                int goalVal = Integer.valueOf(""+goal[2]);
-                return Integer.toString(goalVal-val);
+        List<DataPoint> datatPointsList = dataSet.getDataPoints();
+        int dataPointsListSize = datatPointsList.size();
+
+        if (dataPointsListSize > 0){
+
+            if (dataPointsListSize == 1) {
+                DataPoint dp = datatPointsList.get(0);
+                Field field = dp.getDataType().getFields().get(0);
+                Value value = dp.getValue(field);
+                if (dataType.equals(DataType.TYPE_STEP_COUNT_DELTA)){
+                    int val = Integer.valueOf(""+value);
+                    int goalVal = Integer.valueOf(""+goal[0]);
+                    todayFitInfo.append("Your total step counts: " + value + "\n");
+                    return Integer.toString(goalVal-val);
+                }
+                else if (dataType.equals(DataType.TYPE_CALORIES_EXPENDED)) {
+                    float val = Float.valueOf(""+value);
+                    float goalVal = Float.valueOf(""+goal[1]);
+                    todayFitInfo.append("Your total calories expended: " + value + "\n");
+                    return Float.toString(goalVal-val);
+                }
+                else if (dataType.equals(DataType.TYPE_DISTANCE_DELTA)) {
+                    int val = Integer.valueOf(""+value);
+                    int goalVal = Integer.valueOf(""+goal[2]);
+                    todayFitInfo.append("Your total distance covered: " + value + "\n");
+                    return Integer.toString(goalVal-val);
+                }
             }
-        } else if (dpL.size() == 0){
+
+            if (dataPointsListSize > 1) {
+                DateFormat dateFormat = getTimeInstance();
+                long activeMinutes = 0;
+                for (DataPoint dp : datatPointsList) {
+                    activityInfo.append("Start: " + dateFormat.format(dp.getStartTime(TimeUnit.MILLISECONDS)) + "\n")
+                    .append("End: " + dateFormat.format(dp.getEndTime(TimeUnit.MILLISECONDS)) + "\n");
+
+                    for (Field field: dp.getDataType().getFields()) {
+
+                        if (field.getName().equals("duration")) {
+                            long duration = TimeUnit.MINUTES.convert(Long.valueOf(""+dp.getValue(field))
+                                    , TimeUnit.MILLISECONDS);
+                            activeMinutes += duration;
+                            activityInfo.append("Duration (Minutes): " + duration + "\n\n");
+                        }
+                        if (field.getName().equals("activity")) {
+                            activityInfo.append("Activity: " +
+                                    FitnessActivities.getName(Integer.valueOf(""+dp.getValue(field))) +"\n");
+                        }
+                    }
+                }
+                Long goalVal = Long.valueOf(""+goal[3]);
+                todayFitInfo.append("Your total activity duration (minutes): " + activeMinutes + "\n");
+                return Long.toString(goalVal-activeMinutes);
+            }
+
+        }
+        else if (datatPointsList.size() == 0){
             if (dataType.equals(DataType.TYPE_STEP_COUNT_DELTA)){
+                todayFitInfo.append("Your total step counts: 0\n");
                 return goal[0];
-            } else if (dataType.equals(DataType.TYPE_CALORIES_EXPENDED)) {
+            }
+            else if (dataType.equals(DataType.TYPE_CALORIES_EXPENDED)) {
+                todayFitInfo.append("Your total calories expended: 0.0\n");
                 return goal[1];
-            } else if (dataType.equals(DataType.TYPE_DISTANCE_DELTA)) {
+            }
+            else if (dataType.equals(DataType.TYPE_DISTANCE_DELTA)) {
+                todayFitInfo.append("Your total distance covered: 0\n");
                 return goal[2];
+            }
+            else {
+                todayFitInfo.append("Your total activity duration (minutes): 0\n");
+                return goal[3];
             }
         }
         return "error";
@@ -412,7 +457,7 @@ public class MainActivity extends AppCompatActivity {
         cal.setTime(now);
         //cal.add(field, -1);
         long endTime = cal.getTimeInMillis();
-        cal.add(Calendar.DAY_OF_YEAR, -goalPeriod);
+        cal.add(Calendar.DAY_OF_YEAR, 1);
         long startTime = cal.getTimeInMillis();
 
         //  Create a delete request object, providing a data type and a time interval
@@ -420,6 +465,8 @@ public class MainActivity extends AppCompatActivity {
                 .setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS)
                 .addDataType(DataType.TYPE_STEP_COUNT_DELTA)
                 .addDataType(DataType.TYPE_CALORIES_EXPENDED)
+                .addDataType(DataType.TYPE_DISTANCE_DELTA)
+                .addDataType(DataType.TYPE_ACTIVITY_SEGMENT)
                 .build();
 
         // Invoke the History API with the Google API client object and delete request, and then
