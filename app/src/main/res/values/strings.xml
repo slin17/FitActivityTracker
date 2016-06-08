@@ -8,6 +8,8 @@
     <string name="calories_expended">Number of Calories Expended:</string>
     <string name="distance_delta">Distance Traveled (meters):</string>
     <string name="check_your_goal_for">Check Your Goal For:</string>
+    <string name="activity_duration">Activity Duration (Goal): </string>
+    <string name="minutes">Minutes</string>
     <string name="days">Days</string>
     <string name="weeks">Weeks</string>
     <string name="months">Months</string>
@@ -17,4 +19,6 @@
     <string name="permission_rationale">Location data is used as part of the Google Fit API</string>
     <string name="permission_denied_explanation">Permission was denied, but is needed for core
         functionality.</string>
+    <string name="start_workout">Start Workout</string>
+    <string name="end_workout">End Workout</string>
 </resources>
