@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">FitActivityTracker</string>
     <string name="action_delete_data">Delete requested data</string>
+    <string name="unregister_fitness_datalisteners">Unregister Fitness DataListeners</string>
     <string name="action_settings">Settings</string>
     <string name="check_your_goal">Check Your Goal</string>
     <string name="num_steps">Number of Steps:</string>

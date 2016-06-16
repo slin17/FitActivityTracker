@@ -62,20 +62,20 @@ public class FitnessGoalChecker {
                 Field field = dp.getDataType().getFields().get(0);
                 Value value = dp.getValue(field);
                 if (dataType.equals(DataType.TYPE_STEP_COUNT_DELTA)){
-                    int val = Integer.valueOf(""+value);
-                    int goalVal = Integer.valueOf(""+goal[0]);
+                    int val = Integer.parseInt(""+value);
+                    int goalVal = Integer.parseInt(""+goal[0]);
                     todayFitInfo.append("Your total step counts: " + value + "\n");
                     return Integer.toString(goalVal-val);
                 }
                 else if (dataType.equals(DataType.TYPE_CALORIES_EXPENDED)) {
-                    float val = Float.valueOf(""+value);
-                    float goalVal = Float.valueOf(""+goal[1]);
+                    float val = Float.parseFloat(""+value);
+                    float goalVal = Float.parseFloat(""+goal[1]);
                     todayFitInfo.append("Your total calories expended: " + value + "\n");
                     return Float.toString(goalVal-val);
                 }
                 else if (dataType.equals(DataType.TYPE_DISTANCE_DELTA)) {
-                    float val = Float.valueOf(""+value);
-                    float goalVal = Float.valueOf(""+goal[2]);
+                    float val = Float.parseFloat(""+value);
+                    float goalVal = Float.parseFloat(""+goal[2]);
                     todayFitInfo.append("Your total distance covered: " + value + "\n");
                     return Float.toString(goalVal-val);
                 }
@@ -92,18 +92,18 @@ public class FitnessGoalChecker {
                     for (Field field: dp.getDataType().getFields()) {
 
                         if (field.getName().equals("duration")) {
-                            long duration = TimeUnit.MINUTES.convert(Long.valueOf(""+dp.getValue(field))
+                            long duration = TimeUnit.MINUTES.convert(Long.parseLong(""+dp.getValue(field))
                                     , TimeUnit.MILLISECONDS);
                             activeMinutes += duration;
                             activityInfo.append("Duration (Minutes): " + duration + "\n\n");
                         }
                         if (field.getName().equals("activity")) {
                             activityInfo.append("Activity: " +
-                                    FitnessActivities.getName(Integer.valueOf(""+dp.getValue(field))) +"\n");
+                                    FitnessActivities.getName(Integer.parseInt(""+dp.getValue(field))) +"\n");
                         }
                     }
                 }
-                Long goalVal = Long.valueOf(""+goal[3]);
+                Long goalVal = Long.parseLong(""+goal[3]);
                 todayFitInfo.append("Your total activity duration (minutes): " + activeMinutes + "\n");
                 return Long.toString(goalVal-activeMinutes);
             }

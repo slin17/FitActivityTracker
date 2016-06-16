@@ -89,7 +89,7 @@ public class FitnessDataHandler {
     }
 
     // [START parse_dataset]
-    private static void dumpDataSet(DataSet dataSet) {
+    public static void dumpDataSet(DataSet dataSet) {
         Log.i(TAG, "Data returned for Data type: " + dataSet.getDataType().getName());
         DateFormat dateFormat = getTimeInstance();
 

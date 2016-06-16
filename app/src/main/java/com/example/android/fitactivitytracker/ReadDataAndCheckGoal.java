@@ -51,10 +51,10 @@ public class ReadDataAndCheckGoal {
         protected void onPostExecute(String[] result) {
             String text1, text2, text3, text4;
 
-            int numStepsDiff = Integer.valueOf(result[0]);
-            float caloriesDiff = Float.valueOf(result[1]);
-            float distanceDiff = Float.valueOf(result[2]);
-            long durationDiff = Long.valueOf(result[3]);
+            int numStepsDiff = Integer.parseInt(result[0]);
+            float caloriesDiff = Float.parseFloat(result[1]);
+            float distanceDiff = Float.parseFloat(result[2]);
+            long durationDiff = Long.parseLong(result[3]);
             Log.i(TAG,"numStepsDiff: "+ numStepsDiff);
             Log.i(TAG,"caloriesDiff: "+ caloriesDiff);
             Log.i(TAG,"distanceDiff: "+ distanceDiff);
