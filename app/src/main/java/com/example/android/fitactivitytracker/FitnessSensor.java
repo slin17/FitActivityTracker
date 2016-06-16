@@ -80,7 +80,6 @@ public class FitnessSensor {
                 dataType.equals(DataType.TYPE_ACTIVITY_SEGMENT)){
 
         }*/
-
         fSListener = new OnDataPointListener() {
             @Override
             public void onDataPoint(DataPoint dataPoint) {

@@ -40,9 +40,6 @@ public class MainActivity extends AppCompatActivity {
     public static final String SAMPLE_SESSION_NAME = "Test Session";
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
-    //private static final String AUTH_PENDING = "auth_state_pending";
-    //private static boolean authInProgress = false;
-
     private static StringBuilder emptyEditText = new StringBuilder("");
     private static int emptyEditTextCount = 0;
 
@@ -58,12 +55,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        /*
-        if (savedInstanceState != null) {
-            authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
-        }
-        */
 
         if (!PermissionsManager.checkPermissions(this)) {
             PermissionsManager.requestPermissions(this);
@@ -156,11 +147,6 @@ public class MainActivity extends AppCompatActivity {
     public void startWorkout(View v) {
         findFitnessDataSources();
 
-        /*
-        for (DataSource dataSource: FitnessSensor.mDataSourceList) {
-            subscribe(dataSource);
-        }
-        */
         startSession();
     }
 
@@ -323,25 +309,16 @@ public class MainActivity extends AppCompatActivity {
     private SessionReadRequest readFitnessSession() {
         Log.i(TAG, "Reading History API results for session: " + SAMPLE_SESSION_NAME);
         // [START build_read_session_request]
-        // Set a start and end time for our query, using a start time of 1 week before this moment.
-        /*
-        Calendar cal = Calendar.getInstance();
-        Date now = new Date();
-        cal.setTime(now);
-        long endTime = cal.getTimeInMillis();
-        cal.add(Calendar.DAY_OF_YEAR, -1);
-        long startTime = cal.getTimeInMillis();
-        */
         long startTime = mSession.getStartTime(TimeUnit.MILLISECONDS);
         long endTime = mSession.getEndTime(TimeUnit.MILLISECONDS);
 
         // Build a session read request
         SessionReadRequest readRequest = new SessionReadRequest.Builder()
                 .setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS)
-                .read(DataType.TYPE_ACTIVITY_SAMPLE)
+                //.read(DataType.TYPE_ACTIVITY_SAMPLE)
                 .read(DataType.TYPE_STEP_COUNT_DELTA)
-                .read(DataType.TYPE_CALORIES_EXPENDED)
-                .read(DataType.TYPE_DISTANCE_DELTA)
+                //.read(DataType.TYPE_CALORIES_EXPENDED)
+                //.read(DataType.TYPE_DISTANCE_DELTA)
                 .setSessionName(SAMPLE_SESSION_NAME)
                 .build();
         // [END build_read_session_request]
