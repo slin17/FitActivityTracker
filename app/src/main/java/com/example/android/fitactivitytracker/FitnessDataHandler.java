@@ -11,6 +11,7 @@ import com.google.android.gms.fitness.data.DataPoint;
 import com.google.android.gms.fitness.data.DataSet;
 import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Field;
+import com.google.android.gms.fitness.data.Session;
 import com.google.android.gms.fitness.request.DataDeleteRequest;
 import com.google.android.gms.fitness.request.DataReadRequest;
 import com.google.android.gms.fitness.result.DataReadResult;
@@ -30,24 +31,34 @@ import static java.text.DateFormat.getTimeInstance;
 public class FitnessDataHandler {
     public static final String TAG = "FitActivityTracker";
 
-    public static DataReadRequest queryFitnessData() {
+    public static DataReadRequest queryFitnessData(Session session) {
         // [START build_read_data_request]
-        // Setting a start and end date using a range of 1 day before this moment.
-        Calendar cal = Calendar.getInstance();
-        Date now = new Date();
-        cal.setTime(now);
+        long startTime, endTime;
+        DateFormat dateFormat;
+        if (session == null) {
+            // Setting a start and end date using a range of 1 day before this moment.
+            Calendar cal = Calendar.getInstance();
+            Date now = new Date();
+            cal.setTime(now);
 
-        long endTime = cal.getTimeInMillis();
-        // compute start of the day for the timestamp
+            endTime = cal.getTimeInMillis();
+            // compute start of the day for the timestamp
 
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
 
-        long startTime = cal.getTimeInMillis();
+            startTime = cal.getTimeInMillis();
+            dateFormat = getDateInstance();
+        }
+        else {
+            startTime = session.getStartTime(TimeUnit.MILLISECONDS);
+            endTime = session.getEndTime(TimeUnit.MILLISECONDS);
+            dateFormat = getTimeInstance();
+        }
 
-        java.text.DateFormat dateFormat = getDateInstance();
+        //java.text.DateFormat dateFormat = getDateInstance();
         Log.i(TAG, "Range Start: " + dateFormat.format(startTime));
         Log.i(TAG, "Range End: " + dateFormat.format(endTime));
 
@@ -57,7 +68,7 @@ public class FitnessDataHandler {
                 .aggregate(DataType.TYPE_CALORIES_EXPENDED, DataType.AGGREGATE_CALORIES_EXPENDED)
                 .aggregate(DataType.TYPE_DISTANCE_DELTA, DataType.AGGREGATE_DISTANCE_DELTA)
                 .aggregate(DataType.TYPE_ACTIVITY_SEGMENT, DataType.AGGREGATE_ACTIVITY_SUMMARY)
-                .bucketByTime(1, TimeUnit.DAYS)
+                .bucketByTime(1, TimeUnit.MINUTES)
                 .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
                 .build();
         // [END build_read_data_request]
@@ -114,7 +125,6 @@ public class FitnessDataHandler {
         Date now = new Date();
         cal.setTime(now);
         long endTime = cal.getTimeInMillis();
-        //cal.add(Calendar.DAY_OF_WEEK, -1);
         cal.set(Calendar.HOUR_OF_DAY, 0);
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);

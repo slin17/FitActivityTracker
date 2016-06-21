@@ -9,6 +9,8 @@ import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.fitness.FitnessStatusCodes;
 import com.google.android.gms.fitness.data.DataSource;
 import com.google.android.gms.fitness.data.DataType;
+import com.google.android.gms.fitness.data.Subscription;
+import com.google.android.gms.fitness.result.ListSubscriptionsResult;
 
 /**
  * Created by SawS on 6/12/16.
@@ -39,14 +41,34 @@ public class FitnessRecording {
         // [END subscribe_to_datatype]
     }
 
-    public static void cancelSubscription(GoogleApiClient mClient) {
+    /**
+     * Fetch a list of all active subscriptions and log it. Since the logger for this sample
+     * also prints to the screen, we can see what is happening in this way.
+     */
+    public static void dumpSubscriptionsList(GoogleApiClient mClient) {
+        // [START list_current_subscriptions]
+        Fitness.RecordingApi.listSubscriptions(mClient, DataType.TYPE_STEP_COUNT_DELTA)
+                // Create the callback to retrieve the list of subscriptions asynchronously.
+                .setResultCallback(new ResultCallback<ListSubscriptionsResult>() {
+                    @Override
+                    public void onResult(ListSubscriptionsResult listSubscriptionsResult) {
+                        for (Subscription sc : listSubscriptionsResult.getSubscriptions()) {
+                            DataType dt = sc.getDataType();
+                            Log.i(TAG, "Active subscription for data type: " + dt.getName());
+                        }
+                    }
+                });
+        // [END list_current_subscriptions]
+    }
+
+    public static void cancelSubscription(GoogleApiClient mClient, DataSource dataSource) {
         final String dataTypeStr = DataType.TYPE_STEP_COUNT_DELTA.toString();
         Log.i(TAG, "Unsubscribing from data type: " + dataTypeStr);
 
         // Invoke the Recording API to unsubscribe from the data type and specify a callback that
         // will check the result.
         // [START unsubscribe_from_datatype]
-        Fitness.RecordingApi.unsubscribe(mClient, DataType.TYPE_STEP_COUNT_DELTA)
+        Fitness.RecordingApi.unsubscribe(mClient, dataSource)
                 .setResultCallback(new ResultCallback<Status>() {
                     @Override
                     public void onResult(Status status) {

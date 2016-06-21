@@ -28,7 +28,7 @@ public class FitnessSensor {
     public static String stepCountsStr = "0";
     private static GoogleApiClient fSClient = null;
     private static OnDataPointListener fSListener;
-    public static List<DataSource> mDataSourceList;
+    public static List<DataSource> mDataSourceList = new ArrayList<DataSource>();
     private static List<OnDataPointListener> mListenerList = new ArrayList<OnDataPointListener>();
 
     public static void findFitnessDataSources(final GoogleApiClient mClient) {
@@ -49,7 +49,7 @@ public class FitnessSensor {
                     @Override
                     public void onResult(DataSourcesResult dataSourcesResult) {
                         Log.i(TAG, "Result: " + dataSourcesResult.getStatus().toString());
-                        mDataSourceList = dataSourcesResult.getDataSources();
+                        //mDataSourceList = dataSourcesResult.getDataSources();
                         Log.i(TAG, "Size of mDataSourceList (FitnessSensor): " + mDataSourceList.size());
                         for (DataSource dataSource : dataSourcesResult.getDataSources()) {
 
@@ -57,7 +57,8 @@ public class FitnessSensor {
                             Log.i(TAG, "Data Source type: " + dataSource.getDataType().getName());
                             if (dataSource.getDataType().equals(DataType.TYPE_STEP_COUNT_DELTA)
                                     && fSListener == null) {
-                                //mDataSourceList.add(dataSource);
+                                mDataSourceList.add(dataSource);
+
                                 Log.i(TAG, "Data source for "+ dataSource.getDataType().getName()+ " found!  Registering.");
                                 registerFitnessDataListener(dataSource);
                                 FitnessRecording.subscribe(mClient, dataSource);

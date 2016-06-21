@@ -35,7 +35,7 @@ public class ReadDataAndCheckGoal {
         protected String[] doInBackground(String[]... params) {
 
             // Begin by creating the query.
-            DataReadRequest readRequest = FitnessDataHandler.queryFitnessData();
+            DataReadRequest readRequest = FitnessDataHandler.queryFitnessData(MainActivity.mSession);
 
             // [START read_dataset]
             // Invoke the History API to fetch the data with the query and await the result of
