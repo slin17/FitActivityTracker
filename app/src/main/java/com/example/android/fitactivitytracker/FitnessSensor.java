@@ -25,23 +25,23 @@ import java.util.concurrent.TimeUnit;
  */
 public class FitnessSensor {
     public static final String TAG = "FitActivityTracker";
-    public static String stepCountsStr = "0";
+
     private static GoogleApiClient fSClient = null;
     private static OnDataPointListener fSListener;
     public static List<DataSource> mDataSourceList = new ArrayList<DataSource>();
-    private static List<OnDataPointListener> mListenerList = new ArrayList<OnDataPointListener>();
 
     public static void findFitnessDataSources(final GoogleApiClient mClient) {
         fSClient = mClient;
-        //final List<DataSource> mDataSourceList = new ArrayList<DataSource>();
 
         // [START find_data_sources]
         // Note: Fitness.SensorsApi.findDataSources() requires the ACCESS_FINE_LOCATION permission.
+
         Fitness.SensorsApi.findDataSources(mClient, new DataSourcesRequest.Builder()
                 // At least one datatype must be specified.
-                //.setDataTypes(DataType.TYPE_STEP_COUNT_DELTA, DataType.TYPE_CALORIES_EXPENDED, DataType.TYPE_DISTANCE_DELTA,
-                        //DataType.TYPE_ACTIVITY_SEGMENT)
-                .setDataTypes(DataType.TYPE_STEP_COUNT_DELTA)
+
+                .setDataTypes(DataType.TYPE_STEP_COUNT_DELTA, DataType.TYPE_CALORIES_EXPENDED, DataType.TYPE_DISTANCE_DELTA,
+                        DataType.TYPE_ACTIVITY_SEGMENT)
+
                 // Can specify whether data type is raw or derived.
                 .setDataSourceTypes(DataSource.TYPE_RAW, DataSource.TYPE_DERIVED)
                 .build())
@@ -49,19 +49,20 @@ public class FitnessSensor {
                     @Override
                     public void onResult(DataSourcesResult dataSourcesResult) {
                         Log.i(TAG, "Result: " + dataSourcesResult.getStatus().toString());
-                        //mDataSourceList = dataSourcesResult.getDataSources();
+
+                        mDataSourceList = dataSourcesResult.getDataSources();
+
                         Log.i(TAG, "Size of mDataSourceList (FitnessSensor): " + mDataSourceList.size());
                         for (DataSource dataSource : dataSourcesResult.getDataSources()) {
-
                             Log.i(TAG, "Data source found: " + dataSource.toString());
                             Log.i(TAG, "Data Source type: " + dataSource.getDataType().getName());
-                            if (dataSource.getDataType().equals(DataType.TYPE_STEP_COUNT_DELTA)
-                                    && fSListener == null) {
-                                mDataSourceList.add(dataSource);
 
-                                Log.i(TAG, "Data source for "+ dataSource.getDataType().getName()+ " found!  Registering.");
+                            FitnessRecording.subscribe(mClient, dataSource.getDataType());
+
+                            Log.i(TAG, "Data source for "+ dataSource.getDataType().getName()+ " found!  Registering.");
+
+                            if (fSListener == null && dataSource.getDataType().equals(DataType.TYPE_STEP_COUNT_DELTA)) {
                                 registerFitnessDataListener(dataSource);
-                                FitnessRecording.subscribe(mClient, dataSource);
                             }
                         }
                     }
@@ -74,19 +75,12 @@ public class FitnessSensor {
         // [START register_data_listener]
 
         final DataType dataType = dataSource.getDataType();
-        /*
-        if (dataType.equals(DataType.TYPE_STEP_COUNT_DELTA) ||
-                dataType.equals(DataType.TYPE_CALORIES_EXPENDED) ||
-                dataType.equals(DataType.TYPE_DISTANCE_DELTA) ||
-                dataType.equals(DataType.TYPE_ACTIVITY_SEGMENT)){
 
-        }*/
         fSListener = new OnDataPointListener() {
             @Override
             public void onDataPoint(DataPoint dataPoint) {
                 for (Field field : dataPoint.getDataType().getFields()) {
                     Value val = dataPoint.getValue(field);
-                    stepCountsStr = "" + (Integer.parseInt(stepCountsStr)+ Integer.parseInt(""+val));
                     Log.i(TAG, "Detected DataPoint field: " + field.getName());
                     Log.i(TAG, "Detected DataPoint value: " + val);
                 }
@@ -106,8 +100,7 @@ public class FitnessSensor {
                     public void onResult(Status status) {
                         if (status.isSuccess()) {
                             Log.i(TAG, "Listener registered! for: " + dataType.getName());
-                            mListenerList.add(fSListener);
-                            //fSListener = null;
+
                         } else {
                             Log.i(TAG, "Listener not registered. " + dataType. getName());
                         }
@@ -117,7 +110,7 @@ public class FitnessSensor {
     }
 
     public static void unregisterFitnessDataListener() {
-        if (mListenerList.size() == 0) {
+        if (fSListener == null) {
             // This code only activates one listener at a time.  If there's no listener, there's
             // nothing to unregister.
             return;
@@ -127,24 +120,20 @@ public class FitnessSensor {
         // Waiting isn't actually necessary as the unregister call will complete regardless,
         // even if called from within onStop, but a callback can still be added in order to
         // inspect the results.
-        for (OnDataPointListener listener: mListenerList) {
-            Fitness.SensorsApi.remove(
-                    fSClient,
-                    listener)
-                    .setResultCallback(new ResultCallback<Status>() {
-                        @Override
-                        public void onResult(Status status) {
-                            if (status.isSuccess()) {
-                                Log.i(TAG, "Listener was removed!");
 
-                            } else {
-                                Log.i(TAG, "Listener was not removed.");
-                            }
+        Fitness.SensorsApi.remove(
+                fSClient,
+                fSListener)
+                .setResultCallback(new ResultCallback<Status>() {
+                    @Override
+                    public void onResult(Status status) {
+                        if (status.isSuccess()) {
+                            Log.i(TAG, "Listener was removed!");
+                        } else {
+                            Log.i(TAG, "Listener was not removed.");
                         }
-                    });
-        }
-
-        mListenerList.clear();
+                    }
+                });
         // [END unregister_data_listener]
     }
 }

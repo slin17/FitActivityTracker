@@ -19,12 +19,12 @@ import com.google.android.gms.fitness.Fitness;
  * Created by SawS on 6/7/16.
  */
 public class FitApiClient {
-    public static final String TAG = "FitActivityTracker";
-    private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
+    public final String TAG = "FitActivityTracker";
+    private final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
     private GoogleApiClient fClient;
-    public FitApiClient (final Activity activity, final Button checkGoalButton,
-                                                      final Button startWorkoutButton) {
+
+    public FitApiClient (final Activity activity) {
          fClient = new GoogleApiClient.Builder(activity)
                 .addApi(Fitness.HISTORY_API)
                 .addApi(Fitness.SESSIONS_API)
@@ -32,7 +32,7 @@ public class FitApiClient {
                 .addApi(Fitness.SENSORS_API)
                 .addScope(new Scope(Scopes.FITNESS_LOCATION_READ_WRITE))
                 .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
-                //.addScope(new Scope(Scopes.FITNESS_BODY_READ_WRITE))
+                .addScope(new Scope(Scopes.FITNESS_BODY_READ_WRITE))
                 .addConnectionCallbacks(
                         new GoogleApiClient.ConnectionCallbacks() {
                             @Override
@@ -40,10 +40,7 @@ public class FitApiClient {
                                 Log.i(TAG, "Connected!!!");
                                 Toast.makeText(activity.getApplicationContext(),
                                         "GoogleApiClient Connected!!!",Toast.LENGTH_SHORT).show();
-
-                                checkGoalButton.setEnabled(true);
-                                startWorkoutButton.setEnabled(true);
-
+                                setButtons(activity);
                             }
 
                             @Override
@@ -73,9 +70,23 @@ public class FitApiClient {
                 .build();
     }
 
+    private void setButtons (final Activity activity) {
+        Button checkGoalButton = (Button) activity.findViewById(R.id.check_your_goal_button);
+        checkGoalButton.setEnabled(true);
+        Button endWorkOutButton = (Button) activity.findViewById(R.id.end_workout_button);
+        Button startWorkOutButton = (Button) activity.findViewById(R.id.start_workout_button);
+        if (!endWorkOutButton.isEnabled()) {
+            startWorkOutButton.setEnabled(true);
+        }
+
+    }
     public void connect() {
         fClient.connect();
     }
+
+    public void isConnecting() {fClient.isConnecting(); }
+
+    public void isConnected() {fClient.isConnected(); }
 
     public GoogleApiClient getClient() {
         return fClient;
@@ -88,7 +99,6 @@ public class FitApiClient {
                 // Make sure the app is not already connected or attempting to connect
                 if (!fClient.isConnecting() && !fClient.isConnected()) {
                     Log.i(TAG, "onActivityResult: Connecting fClient ...");
-
                     fClient.connect();
                 }
             }

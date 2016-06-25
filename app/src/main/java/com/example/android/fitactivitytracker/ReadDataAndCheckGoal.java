@@ -19,8 +19,8 @@ public class ReadDataAndCheckGoal {
     public static final String TAG = "FitActivityTracker";
     private static Activity mActivity = null;
     private static GoogleApiClient apiClient = null;
-    private static StringBuilder activityInfo = new StringBuilder("Your Today Activity Summary: \n\n");
-    private static StringBuilder todayFitInfo = new StringBuilder("Your Today Fitness Result: \n");
+    private static StringBuilder activityInfo = new StringBuilder("Your Activity Summary: \n\n");
+    private static StringBuilder todayFitInfo = new StringBuilder("Your Fitness Result: \n");
 
     public static void ReadDataAndCheckGoalExecute
             (final Activity activity, GoogleApiClient mClient, String[] goalStr) {
@@ -35,30 +35,34 @@ public class ReadDataAndCheckGoal {
         protected String[] doInBackground(String[]... params) {
 
             // Begin by creating the query.
-            DataReadRequest readRequest = FitnessDataHandler.queryFitnessData(MainActivity.mSession);
-
+            DataReadRequest readRequest = FitnessDataHandler.queryFitnessData(FitnessSession.mSession);
             // [START read_dataset]
             // Invoke the History API to fetch the data with the query and await the result of
             // the read request.
             DataReadResult dataReadResult =
                     Fitness.HistoryApi.readData(apiClient, readRequest).await(1, TimeUnit.MINUTES);
             // [END read_dataset]
+            FitnessSession.refreshSession();
+            Log.i(TAG, "ReadDataAndCheckGoalTask printing dataReadResult ...");
             FitnessDataHandler.printData(dataReadResult);
+
             return FitnessGoalChecker.checkGoal(dataReadResult, params[0], activityInfo, todayFitInfo);
         }
 
         @Override
         protected void onPostExecute(String[] result) {
-            String text1, text2, text3, text4;
 
+            String text1, text2, text3, text4;
             int numStepsDiff = Integer.parseInt(result[0]);
             float caloriesDiff = Float.parseFloat(result[1]);
             float distanceDiff = Float.parseFloat(result[2]);
             long durationDiff = Long.parseLong(result[3]);
+
             Log.i(TAG,"numStepsDiff: "+ numStepsDiff);
             Log.i(TAG,"caloriesDiff: "+ caloriesDiff);
             Log.i(TAG,"distanceDiff: "+ distanceDiff);
-            Log.i(TAG,"durationDiff: "+ distanceDiff);
+            Log.i(TAG,"durationDiff: "+ durationDiff);
+
             if (numStepsDiff <= 0) {
                 text1 = "Yay, you've completed your goal for number of steps.\n";
             } else {
@@ -88,8 +92,8 @@ public class ReadDataAndCheckGoal {
     }
 
     public static void clearAllGlobalVar() {
-        activityInfo = new StringBuilder("Your Today Activity Summary: \n\n");
-        todayFitInfo = new StringBuilder("Your Today Fitness Result: \n");
+        activityInfo = new StringBuilder("Your Activity Summary: \n\n");
+        todayFitInfo = new StringBuilder("Your Fitness Result: \n");
     }
 
 }

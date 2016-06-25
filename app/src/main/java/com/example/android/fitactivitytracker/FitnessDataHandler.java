@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import static java.text.DateFormat.getDateInstance;
 import static java.text.DateFormat.getTimeInstance;
 
+
 /**
  * Created by SawS on 6/7/16.
  */
@@ -35,6 +36,7 @@ public class FitnessDataHandler {
         // [START build_read_data_request]
         long startTime, endTime;
         DateFormat dateFormat;
+
         if (session == null) {
             // Setting a start and end date using a range of 1 day before this moment.
             Calendar cal = Calendar.getInstance();
@@ -43,7 +45,6 @@ public class FitnessDataHandler {
 
             endTime = cal.getTimeInMillis();
             // compute start of the day for the timestamp
-
             cal.set(Calendar.HOUR_OF_DAY, 0);
             cal.set(Calendar.MINUTE, 0);
             cal.set(Calendar.SECOND, 0);
@@ -63,12 +64,11 @@ public class FitnessDataHandler {
         Log.i(TAG, "Range End: " + dateFormat.format(endTime));
 
         DataReadRequest readRequest = new DataReadRequest.Builder()
-
                 .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
                 .aggregate(DataType.TYPE_CALORIES_EXPENDED, DataType.AGGREGATE_CALORIES_EXPENDED)
                 .aggregate(DataType.TYPE_DISTANCE_DELTA, DataType.AGGREGATE_DISTANCE_DELTA)
                 .aggregate(DataType.TYPE_ACTIVITY_SEGMENT, DataType.AGGREGATE_ACTIVITY_SUMMARY)
-                .bucketByTime(1, TimeUnit.MINUTES)
+                .bucketByTime(1, TimeUnit.DAYS)
                 .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
                 .build();
         // [END build_read_data_request]

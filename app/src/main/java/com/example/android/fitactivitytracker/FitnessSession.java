@@ -27,46 +27,49 @@ import static java.text.DateFormat.getTimeInstance;
  */
 public class FitnessSession {
     public static final String TAG = "FitActivityTracker";
-
     public static Session mSession;
-    public static final String SAMPLE_SESSION_NAME = "Test Session";
+    //public final String SAMPLE_SESSION_NAME = "Test Session";
     private static FitApiClient mRClient = null;
+    private static Activity mActivity;
 
-
-    public static void startSession(final Activity activity, FitApiClient mClient, final Button endWorkoutButton,
-                                    final Button startWorkoutButton) {
-        mRClient = mClient;
-        if (mSession == null){
-            mSession = new Session.Builder()
-                    .setName(SAMPLE_SESSION_NAME)
-                    .setIdentifier(activity.getString(R.string.app_name) + " " + System.currentTimeMillis())
-                    .setDescription("Test Session")
-                    .setStartTime(System.currentTimeMillis()- TimeUnit.SECONDS.toMillis(1), TimeUnit.MILLISECONDS)
-                    // optional - if your app knows what activity:
-                    //.setActivity(FitnessActivities.ON_FOOT)
-                    .build();
-            PendingResult<Status> pendingResult =
-                    Fitness.SessionsApi.startSession(mClient.getClient(),mSession);
-
-            pendingResult.setResultCallback(
-                    new ResultCallback<Status>() {
-                        @Override
-                        public void onResult(Status status) {
-                            if (status.isSuccess()) {
-                                Log.i(TAG, "Successfully started session");
-                                endWorkoutButton.setEnabled(true);
-                                startWorkoutButton.setEnabled(false);
-                            } else {
-                                Log.i(TAG, "Failed to start session: " + status.getStatusMessage());
-                            }
-                        }
-                    }
-            );
-        }
+    public static void refreshSession() {
+        mSession = null;
     }
 
-    public static void stopSession(final Button endWorkoutButton,
-                                   final Button startWorkoutButton) {
+    public static void startSession(final Activity activity, FitApiClient mClient) {
+        mRClient = mClient;
+        mActivity = activity;
+        mSession = new Session.Builder()
+                //.setName(SAMPLE_SESSION_NAME)
+                .setIdentifier(activity.getString(R.string.app_name) + " " + System.currentTimeMillis())
+                .setStartTime(System.currentTimeMillis()- TimeUnit.SECONDS.toMillis(1), TimeUnit.MILLISECONDS)
+                .build();
+        PendingResult<Status> pendingResult =
+                Fitness.SessionsApi.startSession(mClient.getClient(),mSession);
+
+        pendingResult.setResultCallback(
+                new ResultCallback<Status>() {
+                    @Override
+                    public void onResult(Status status) {
+                        if (status.isSuccess()) {
+                            Log.i(TAG, "Successfully started session");
+                            setButtonsStartS(activity);
+                        } else {
+                            Log.i(TAG, "Failed to start session: " + status.getStatusMessage());
+                        }
+                    }
+                }
+        );
+    }
+
+    private static void setButtonsStartS(final Activity activity) {
+        Button endWorkOutButton = (Button) activity.findViewById(R.id.end_workout_button);
+        Button startWorkOutButton = (Button) activity.findViewById(R.id.start_workout_button);
+        endWorkOutButton.setEnabled(true);
+        startWorkOutButton.setEnabled(false);
+    }
+
+    public static void stopSession() {
         PendingResult<SessionStopResult> pendingResult =
                 Fitness.SessionsApi.stopSession(mRClient.getClient(), mSession.getIdentifier());
 
@@ -82,11 +85,8 @@ public class FitnessSession {
                         Log.i(TAG, "Session start: " + dateFormat.format(mSession.getStartTime(TimeUnit.MILLISECONDS)));
                         Log.i(TAG, "Session end: " + dateFormat.format(mSession.getEndTime(TimeUnit.MILLISECONDS)));
                     }
-                    startWorkoutButton.setEnabled(true);
-                    endWorkoutButton.setEnabled(false);
-                    //Add any task that needs to be called
-                    FitnessSensor.unregisterFitnessDataListener();
-                    new TempAsyncTask().execute();
+                    setButtonsEndS();
+                    new InsertSessionTask().execute();
                 } else {
                     Log.i(TAG, "Failed to stop session: " + sessionStopResult.getStatus().getStatusMessage());
                 }
@@ -95,13 +95,19 @@ public class FitnessSession {
         });
     }
 
-    private static class TempAsyncTask extends AsyncTask<Void, Void, Void> {
+    private static void setButtonsEndS() {
+        Button endWorkOutButton = (Button) mActivity.findViewById(R.id.end_workout_button);
+        Button startWorkOutButton = (Button) mActivity.findViewById(R.id.start_workout_button);
+        endWorkOutButton.setEnabled(false);
+        startWorkOutButton.setEnabled(true);
+    }
+
+    private static class InsertSessionTask extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... params) {
 
             SessionInsertRequest insertRequest = new SessionInsertRequest.Builder()
                     .setSession(mSession)
-
                     .build();
 
             Log.i(TAG, "Inserting the session in the History API");
@@ -122,6 +128,7 @@ public class FitnessSession {
             DataReadRequest readRequest = FitnessDataHandler.queryFitnessData(mSession);
             DataReadResult dataReadResult =
                     Fitness.HistoryApi.readData(mRClient.getClient(), readRequest).await(1, TimeUnit.MINUTES);
+
             FitnessDataHandler.printData(dataReadResult);
             return null;
         }
@@ -133,7 +140,7 @@ public class FitnessSession {
     }
 
     private static SessionReadRequest readFitnessSession() {
-        Log.i(TAG, "Reading History API results for session: " + SAMPLE_SESSION_NAME);
+        //Log.i(TAG, "Reading History API results for session: " + SAMPLE_SESSION_NAME);
         // [START build_read_session_request]
         long startTime = mSession.getStartTime(TimeUnit.MILLISECONDS);
         long endTime = mSession.getEndTime(TimeUnit.MILLISECONDS);
@@ -145,7 +152,7 @@ public class FitnessSession {
                 .read(DataType.TYPE_STEP_COUNT_DELTA)
                 //.read(DataType.TYPE_CALORIES_EXPENDED)
                 //.read(DataType.TYPE_DISTANCE_DELTA)
-                .setSessionName(SAMPLE_SESSION_NAME)
+                //.setSessionName(SAMPLE_SESSION_NAME)aa
                 .build();
         // [END build_read_session_request]
 

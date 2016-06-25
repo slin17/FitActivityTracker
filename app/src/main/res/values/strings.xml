@@ -22,4 +22,5 @@
         functionality.</string>
     <string name="start_workout">Start Workout</string>
     <string name="end_workout">End Workout</string>
+    <string name="action_dump_subs">List Active Subscriptions</string>
 </resources>

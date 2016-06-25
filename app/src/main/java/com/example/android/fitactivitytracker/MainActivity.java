@@ -15,12 +15,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-
-import com.google.android.gms.fitness.data.Session;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
     public static final String TAG = "FitActivityTracker";
-    public static final String SAMPLE_SESSION_NAME = "Test Session";
+
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
     private static StringBuilder emptyEditText = new StringBuilder("");
@@ -31,8 +30,6 @@ public class MainActivity extends AppCompatActivity {
     private static Button endWorkoutButton;
 
     public static FitApiClient mClient = null;
-
-    public static Session mSession;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +61,11 @@ public class MainActivity extends AppCompatActivity {
         buildFitnessClient();
     }
 
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        buildFitnessClient();
+    }
 
     public void executeTask(View view) {
         String[] goalStr = valAllEditText();
@@ -74,6 +76,12 @@ public class MainActivity extends AppCompatActivity {
             emptyEditTextCount = 0;
         }
         else {
+            if (FitnessSession.mSession == null) {
+                Toast.makeText(this, "Checking Goal for Today Results ...", Toast.LENGTH_LONG).show();
+            }
+            else {
+                Toast.makeText(this, "Checking Goal for Your Workout Session ...", Toast.LENGTH_LONG).show();
+            }
             ReadDataAndCheckGoal.ReadDataAndCheckGoalExecute(this, mClient.getClient(), goalStr);
         }
     }
@@ -117,7 +125,11 @@ public class MainActivity extends AppCompatActivity {
     private void buildFitnessClient() {
         // Create the Google API Client
         if (mClient == null && PermissionsManager.checkPermissions(this)){
-            mClient = new FitApiClient(this, checkGoalButton, startWorkoutButton);
+            mClient = new FitApiClient(this);
+            mClient.connect();
+            findFitnessDataSources();
+        }
+        else if (mClient != null && !mClient.getClient().isConnecting() && !mClient.getClient().isConnected()) {
             mClient.connect();
         }
     }
@@ -128,23 +140,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startWorkout(View v) {
-        findFitnessDataSources();
-
-        FitnessSession.startSession(this, mClient, endWorkoutButton, startWorkoutButton);
+        FitnessSession.startSession(this, mClient);
     }
 
     public void endWorkout(View v) {
-        FitnessSession.stopSession(endWorkoutButton, startWorkoutButton);
+        FitnessSession.stopSession();
         //FitnessRecording.cancelSubscription(mClient.getClient(),FitnessSensor.mDataSourceList.get(0));
     }
 
-    /*
+
     @Override
     protected void onActivityResult (int requestCode, int resultCode, Intent data) {
         //mClient.onActivityResult(requestCode, resultCode, data);
-        Log.i(TAG, "onActivityResult...requestCode: " + requestCode);
+        Log.i(TAG, "onActivityResult...");
         //Log.i(TAG, "onActivityResult...resultCode: " + resultCode);
-
+        //mClient.getClient().connect();
+        buildFitnessClient();
+        /*
         if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
             Log.i(TAG, "resultCode: " + resultCode);
             Log.i(TAG, "resultCode == Activity.RESULT_OK: "+ (resultCode == Activity.RESULT_OK));
@@ -153,9 +165,10 @@ public class MainActivity extends AppCompatActivity {
                 buildFitnessClient();
             }
         }
+        */
 
     }
-    */
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
@@ -210,6 +223,10 @@ public class MainActivity extends AppCompatActivity {
         }
         else if (id == R.id.action_unregister_fitness_datalisteners){
             FitnessSensor.unregisterFitnessDataListener();
+            return true;
+        }
+        else if (id == R.id.action_dump_subs) {
+            FitnessRecording.dumpSubscriptionsList(mClient.getClient());
             return true;
         }
         return super.onOptionsItemSelected(item);
