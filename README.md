@@ -29,7 +29,7 @@ are tracked
 Known Issues (To be Fixed Later):
 
 - onActivityResult in MainActivity is being called with the wrong request code
-- Better Activity Lifecycle Management
+- Better Activity Lifecycle Management (Somehow Resolved)
 	- Currently, it's not guaranteed that there would be no bug with GoogleApiCient and ending a workout session
 		if the user decides to move the app to the background stack, after a workout session is started 
 	- Known error: The "Stop Workout" button is enabled before the GoogleApiClient is re-connected again

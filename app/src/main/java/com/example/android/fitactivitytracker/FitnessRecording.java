@@ -35,12 +35,12 @@ public class FitnessRecording {
 
                             if (status.getStatusCode()
                                     == FitnessStatusCodes.SUCCESS_ALREADY_SUBSCRIBED) {
-                                Log.i(TAG, "Existing subscription for activity detected.");
+                                //Log.i(TAG, "Existing subscription for activity detected.");
                             } else {
-                                Log.i(TAG, "Successfully subscribed! " + dataType.getName());
+                                //Log.i(TAG, "Successfully subscribed! " + dataType.getName());
                             }
                         } else {
-                            Log.i(TAG, "There was a problem subscribing... " + dataType.getName());
+                            //Log.i(TAG, "There was a problem subscribing... " + dataType.getName());
                         }
                     }
                 });
@@ -74,8 +74,6 @@ public class FitnessRecording {
 
         for (DataType dataType: mDataTypeList) {
             final String dataTypeStr = dataType.toString();
-
-            Log.i(TAG, "Unsubscribing from data type: " + dataTypeStr);
             // Invoke the Recording API to unsubscribe from the data type and specify a callback that
             // will check the result.
             // [START unsubscribe_from_datatype]

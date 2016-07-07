@@ -50,7 +50,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        buildFitnessClient();
     }
 
     @Override
@@ -64,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onRestart() {
         super.onRestart();
-        buildFitnessClient();
     }
 
     public void executeTask(View view) {
@@ -88,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String[] valAllEditText(){
         //to check if the user has entered values into the edittext fields for number of steps, calories expended
-        //and distance traveled
+        //activity duration and distance traveled
         EditText numStepsET = (EditText) findViewById(R.id.num_steps_edit_text);
         String numStepsStr = numStepsET.getText().toString();
         if (numStepsStr.equals("")) {
@@ -145,7 +143,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void endWorkout(View v) {
         FitnessSession.stopSession();
-        //FitnessRecording.cancelSubscription(mClient.getClient(),FitnessSensor.mDataSourceList.get(0));
     }
 
 

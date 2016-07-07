@@ -37,7 +37,6 @@ public class FitApiClient {
                         new GoogleApiClient.ConnectionCallbacks() {
                             @Override
                             public void onConnected(Bundle bundle) {
-                                Log.i(TAG, "Connected!!!");
                                 Toast.makeText(activity.getApplicationContext(),
                                         "GoogleApiClient Connected!!!",Toast.LENGTH_SHORT).show();
                                 setButtons(activity);

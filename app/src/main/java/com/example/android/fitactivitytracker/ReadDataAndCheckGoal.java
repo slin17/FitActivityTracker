@@ -2,7 +2,6 @@ package com.example.android.fitactivitytracker;
 
 import android.app.Activity;
 import android.os.AsyncTask;
-import android.util.Log;
 import android.widget.TextView;
 
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -16,7 +15,6 @@ import java.util.concurrent.TimeUnit;
  * Created by SawS on 6/7/16.
  */
 public class ReadDataAndCheckGoal {
-    public static final String TAG = "FitActivityTracker";
     private static Activity mActivity = null;
     private static GoogleApiClient apiClient = null;
     private static StringBuilder activityInfo = new StringBuilder("Your Activity Summary: \n\n");
@@ -33,7 +31,6 @@ public class ReadDataAndCheckGoal {
 
         @Override
         protected String[] doInBackground(String[]... params) {
-
             // Begin by creating the query.
             DataReadRequest readRequest = FitnessDataHandler.queryFitnessData(FitnessSession.mSession);
             // [START read_dataset]
@@ -43,7 +40,7 @@ public class ReadDataAndCheckGoal {
                     Fitness.HistoryApi.readData(apiClient, readRequest).await(1, TimeUnit.MINUTES);
             // [END read_dataset]
             FitnessSession.refreshSession();
-            Log.i(TAG, "ReadDataAndCheckGoalTask printing dataReadResult ...");
+
             FitnessDataHandler.printData(dataReadResult);
 
             return FitnessGoalChecker.checkGoal(dataReadResult, params[0], activityInfo, todayFitInfo);
@@ -57,11 +54,6 @@ public class ReadDataAndCheckGoal {
             float caloriesDiff = Float.parseFloat(result[1]);
             float distanceDiff = Float.parseFloat(result[2]);
             long durationDiff = Long.parseLong(result[3]);
-
-            Log.i(TAG,"numStepsDiff: "+ numStepsDiff);
-            Log.i(TAG,"caloriesDiff: "+ caloriesDiff);
-            Log.i(TAG,"distanceDiff: "+ distanceDiff);
-            Log.i(TAG,"durationDiff: "+ durationDiff);
 
             if (numStepsDiff <= 0) {
                 text1 = "Yay, you've completed your goal for number of steps.\n";

@@ -1,7 +1,5 @@
 package com.example.android.fitactivitytracker;
 
-import android.util.Log;
-
 import com.google.android.gms.fitness.FitnessActivities;
 import com.google.android.gms.fitness.data.Bucket;
 import com.google.android.gms.fitness.data.DataPoint;
@@ -22,15 +20,11 @@ import static java.text.DateFormat.getTimeInstance;
  * Created by SawS on 6/7/16.
  */
 public class FitnessGoalChecker {
-    public static final String TAG = "FitActivityTracker";
-
     public static String[] checkGoal(DataReadResult dataReadResult, String[] goal, StringBuilder activityInfo,
                                      StringBuilder todayFitInfo){
 
         List<String> strL = new ArrayList<String>(4);
         if (dataReadResult.getBuckets().size() > 0) {
-            Log.i(TAG, "Number of returned buckets of DataSets is: "
-                    + dataReadResult.getBuckets().size());
             for (Bucket bucket : dataReadResult.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
@@ -39,8 +33,6 @@ public class FitnessGoalChecker {
                 }
             }
         } else if (dataReadResult.getDataSets().size() > 0) {
-            Log.i(TAG, "Number of returned DataSets is: "
-                    + dataReadResult.getDataSets().size());
             for (DataSet dataSet : dataReadResult.getDataSets()) {
                 String str = checkGoalHelper(dataSet, goal, activityInfo, todayFitInfo);
                 strL.add(str);
